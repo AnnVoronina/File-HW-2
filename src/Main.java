@@ -2,9 +2,21 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class Main {
+
+    public static GameProgress openProgress(String dir){
+        GameProgress gameProgress = null;
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(dir))){
+
+           gameProgress = (GameProgress) ois.readObject();
+        }
+catch (Exception e){
+            e.getMessage();
+} return gameProgress;
+    }
 
     public static void SaveGame(String dir, GameProgress gmp) {
         try (FileOutputStream fos = new FileOutputStream(dir);
@@ -15,6 +27,28 @@ public class Main {
             System.out.println(e.getMessage());
         }
     }
+
+    public static void openZipFile(String dir) {
+
+        try (ZipInputStream zinput = new ZipInputStream(new FileInputStream(dir + "/SaveGame.zip"))) {
+            ZipEntry entry;
+            String name;
+            while ((entry = zinput.getNextEntry()) != null) {
+                name = entry.getName();
+                FileOutputStream fout = new FileOutputStream(dir + "/" + name);
+                for (int c = zinput.read(); c != -1; c = zinput.read()) {
+                    fout.write(c);
+                }
+                fout.flush();
+                zinput.closeEntry();
+                fout.close();
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+    }
+
 
     public static void zipFile(String dir, List<String> dirList) {
 
@@ -41,37 +75,24 @@ public class Main {
     public static void main(String[] args) throws IOException {
         String dir = "/Users/annavoronina/Game";
         StringBuilder str = new StringBuilder();
-        String[] dirName = {"", "src", "res", "savegames", "temp"};
-
+        String[] dirName = {"", "src", "res", "savegames", "temp", "res/drawables",
+                "res/vectors", "res/icons", "src/main", "src/test"};
+        String[] fileName = {"src/main/Main.java", "src/main/Utils.java", "/temp/temp.txt"};
         try {
-            for (int i = 0; i < dirName.length; i++) {
 
+
+            for (int i = 0; i < dirName.length; i++) {
                 if (new File(dir + "/" + dirName[i]).mkdir()) {
                     str.append("Directory: " + dir + "/" + dirName[i] + " create\n");
                 }
             }
-            new File("/Users/annavoronina/Game/src/main").mkdir();
-            str.append("Directory: /Users/annavoronina/Game/src/main create\n");
-            new File("/Users/annavoronina/Game/src/main", "Main.java").createNewFile();
-            str.append("File: Main.java in /Users/annavoronina/Game/src/main  create\n");
-            new File("/Users/annavoronina/Game/src/main/Utils.java").createNewFile();
-            str.append("File: Utils.java in /Users/annavoronina/Game/src/main create\n");
-            new File("/Users/annavoronina/Game/res/drawables").mkdir();
-            str.append("Directory: /Users/annavoronina/Game/res/drawables create\n");
-            new File("/Users/annavoronina/Game/res/vectors").mkdir();
-            str.append("Directory: /Users/annavoronina/Game/res/vectors create\n");
-            new File("/Users/annavoronina/Game/res/icons").mkdir();
-            str.append("Directory: /Users/annavoronina/Game/res/icons create\n");
-            new File("/Users/annavoronina/Game/src/test").mkdir();
-            str.append("Directory: /Users/annavoronina/Game/src/test create\n");
-            new File("/Users/annavoronina/Game/temp").mkdir();
-            str.append("Directory: /Users/annavoronina/Game/temp create\n");
-            new File("/Users/annavoronina/Game/temp", "temp.txt").createNewFile();
-            str.append("File: temp.txt in /Users/annavoronina/Game/temp create\n");
-
-        } catch (IOException exception) {
-            str.append(exception.getMessage());
-
+            for (int i = 0; i < fileName.length; i++) {
+                if (new File(dir + "/" + fileName[i]).createNewFile()) {
+                    str.append("Directory: " + dir + "/" + fileName[i] + " create\n");
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
 
         try (FileOutputStream fos = new FileOutputStream("/Users/annavoronina/Game/temp/temp.txt")) {
@@ -93,8 +114,9 @@ public class Main {
         for (var d : dirList) {
             new File(d).delete();
         }
+        openZipFile(dir);
 
-
+        System.out.println(openProgress(dirList.get(1)));
     }
 }
 
